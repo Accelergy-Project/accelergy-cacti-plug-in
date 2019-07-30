@@ -1,4 +1,4 @@
-# Cacti Plug-in for Accelergy
+# CACTI Plug-in for Accelergy
 
 An energy estimation plug-in for [Accelergy framework](https://github.com/nelliewu95/accelergy)
 
