@@ -130,11 +130,13 @@ class CactiWrapper:
             reader = csv.DictReader(csv_file)
             row = list(reader)[-1]
             if not action_name == 'idle':
-                energy = float(row[cacti_entry])
+                energy = float(row[cacti_entry]) * 1000 # original energy is in has nJ as the unit
             else:
-                energy = float(row[cacti_entry]) * 0.001 * float(row[' Random cycle time (ns)']) * n_banks
+                standby_power_in_pw = loat(row[cacti_entry]) * 1000000
+                idle_energy_per_bank_in_pj = standby_power_in_pw * float(row[' Random cycle time (ns)']) * 1000
+                energy = idle_energy_per_bank_in_pj * n_banks
         os.chdir(curr_dir)
-        return  energy
+        return  energy  # output energy is pJ
 
     def SRAM_attr_supported(self, attributes):
         tech_node = attributes['technology']
