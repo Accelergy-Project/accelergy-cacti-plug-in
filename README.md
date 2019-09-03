@@ -9,7 +9,10 @@ An energy estimation plug-in for [Accelergy framework](https://github.com/nellie
 ## Use the plug-in
 - Clone the repo by ```git clone https://github.com/nelliewu95/accelergy-cacti-plug-in.git```
 - Place the built CACTI7 (folder) inside the cloned folder
-- Open Accelergy's config file ```accelergy_config.yaml``` and add a new list item that points to the cloned folder
+- Option 1
+    - Run ```pip3 install .``` and use the same arguments as installing Accelergy
+- Option 2
+    - Open Accelergy's config file ```accelergy_config.yaml``` and add a new list item that points to the cloned folder
 - To set the relative accuracy of your CACTI plug-in
     - open ```cacti_wrapper.py``` 
     - Edit the first line to set the ```CACTI_ACCURACY``` (default is 70)
