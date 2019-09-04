@@ -3,7 +3,7 @@ CACTI_ACCURACY = 70  # in your metric, please set the accuracy you think CACTI's
 #-------------------------------------------------------------------------------
 # CACTI7 wrapper for generating energy estimations for plain SRAM scraptchpad
 #-------------------------------------------------------------------------------
-import subprocess, os, csv
+import subprocess, os, csv, glob
 
 class CactiWrapper:
     """
@@ -67,6 +67,8 @@ class CactiWrapper:
         return energy
 
     def search_for_cacti_exec(self):
+
+        # search the current directory, top-down walk
         this_dir, this_filename = os.path.split(__file__)
         for root, directories, file_names in os.walk(this_dir):
             for file_name in file_names:
@@ -75,6 +77,15 @@ class CactiWrapper:
                     cacti_exec_dir = os.path.dirname(cacti_exec_path)
                     return cacti_exec_dir
 
+        # search the PATH variable: search the directories provided in the PATH variable. top-down walk
+        PATH_lst = os.environ['PATH'].split(os.pathsep)
+        for path in PATH_lst:
+            for root, directories, file_names in os.walk(os.path.abspath(path)):
+                for file_name in file_names:
+                    if file_name == 'cacti':
+                        cacti_exec_path = root + os.sep + file_name
+                        cacti_exec_dir = os.path.dirname(cacti_exec_path)
+                        return cacti_exec_dir
 
     def SRAM_estimate_energy(self, interface):
 
@@ -132,7 +143,7 @@ class CactiWrapper:
             if not action_name == 'idle':
                 energy = float(row[cacti_entry]) * 1000 # original energy is in has nJ as the unit
             else:
-                standby_power_in_pw = loat(row[cacti_entry]) * 1000000
+                standby_power_in_pw = float(row[cacti_entry]) * 1000000000 # mW -> pW
                 idle_energy_per_bank_in_pj = standby_power_in_pw * float(row[' Random cycle time (ns)']) * 1000
                 energy = idle_energy_per_bank_in_pj * n_banks
         os.chdir(curr_dir)

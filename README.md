@@ -8,7 +8,9 @@ An energy estimation plug-in for [Accelergy framework](https://github.com/nellie
 
 ## Use the plug-in
 - Clone the repo by ```git clone https://github.com/nelliewu95/accelergy-cacti-plug-in.git```
-- Place the built CACTI7 (folder) inside the cloned folder
+- Place the built CACTI7 
+    - Inside the cloned folder
+    - Inside any folder that is included in the ```$PATH```
 - Option 1
     - Run ```pip3 install .``` and use the same arguments as installing Accelergy
 - Option 2
