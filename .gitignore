@@ -1,3 +1,12 @@
+# cacti7 source code
+cacti7/
+
+**/__pycache/**
+
+#pycharm
+**/.idea/
+venv/
+
 # Prerequisites
 *.d
 
