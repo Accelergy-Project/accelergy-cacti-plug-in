@@ -68,7 +68,7 @@ class CactiWrapper:
 
     def search_for_cacti_exec(self):
 
-        # search the current directory, top-down walk
+        # search the current directory first, top-down walk
         this_dir, this_filename = os.path.split(__file__)
         for root, directories, file_names in os.walk(this_dir):
             for file_name in file_names:
