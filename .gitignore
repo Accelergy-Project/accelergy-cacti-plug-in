@@ -1,7 +1,7 @@
 # cacti7 source code
 cacti7/
 
-**/__pycache/**
+**/__pycache__/**
 
 #pycharm
 **/.idea/
