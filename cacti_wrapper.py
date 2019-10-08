@@ -16,7 +16,7 @@ class CactiWrapper:
         self.estimator_name =  "Cacti"
 
         # example primitive classes supported by this estimator
-        self.supported_pc = ['SRAM']
+        self.supported_pc = ['SRAM', 'DRAM']
         self.energy_records = {} # enable data reuse
 
     def primitive_action_supported(self, interface):
@@ -87,6 +87,35 @@ class CactiWrapper:
                         cacti_exec_path = root + os.sep + file_name
                         cacti_exec_dir = os.path.dirname(cacti_exec_path)
                         return cacti_exec_dir
+
+    # ----------------- DRAM related ---------------------------
+
+    def DRAM_attr_supported(self, attributes):
+
+        supported_attributes = {'technology': ['40nm']}
+        if 'technology' in attributes and 'width' in attributes:
+            if attributes['technology'] in supported_attributes['technology']:
+                return True
+        return False
+
+    def DRAM_action_supported(self, action_name, arguments):
+        supported_actions = ['read', 'write', 'idle']
+        if action_name in supported_actions:
+            return 95
+        else:
+            return None
+
+    def DRAM_estimate_energy(self, interface):
+        action_name = interface['action_name']
+        width = interface['attributes']['width']
+        energy = 0
+        if 'read' in action_name or 'write' in action_name:
+          energy = 28  * width  # 28pJ/bit based on Keckler et al. "GPUs and The Future of Parallel Computing"
+
+        return energy
+
+    # ----------------- SRAM related ---------------------------
+
 
     def SRAM_estimate_energy(self, interface):
         # translate the attribute names into the ones that can be understood by Cacti
