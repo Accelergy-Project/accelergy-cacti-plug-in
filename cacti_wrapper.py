@@ -126,19 +126,25 @@ class CactiWrapper:
         size_in_bytes = attributes['width'] * attributes['depth'] // 8
         wordsize_in_bytes = attributes['width'] // 8
         n_rw_ports = attributes['n_rdwr_ports'] + attributes['n_rd_ports'] + attributes['n_wr_ports']
-        n_banks = attributes['n_banks']
+        desired_n_banks = attributes['n_banks']
+        n_banks = desired_n_banks
+        if not math.ceil(math.log2(n_banks)) == math.floor(math.log2(n_banks)):
+            n_banks = 2**(math.ceil(math.log2(n_banks)))
         desired_action_name = interface['action_name']
-        desired_entry_key = (desired_action_name, tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports, n_banks)
+        desired_entry_key = (desired_action_name, tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports, desired_n_banks)
         if desired_entry_key not in self.energy_records:
             print('Info: CACTI plug-in... Querying CACTI for request:\n', interface)
             curr_dir = os.path.abspath(os.getcwd())
             cacti_exec_dir = self.search_for_cacti_exec()
             os.chdir(cacti_exec_dir)
             # check if the generated data already covers the case
+            if not math.ceil(math.log2(desired_n_banks)) == math.floor(math.log2(desired_n_banks)):
+                print('WARN: Cacti-plug-in... n_banks attribute is not a power of 2:', desired_n_banks)
+                print('corrected "n_banks": ', n_banks)
             self.cacti_wrapper_for_SRAM(cacti_exec_dir, tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports,
                                         n_banks, interface)
             for action_name in ['read', 'write', 'idle']:
-                entry_key = (action_name, tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports, n_banks)
+                entry_key = (action_name, tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports, desired_n_banks)
                 if action_name == 'read':
                     cacti_entry = ' Dynamic read energy (nJ)'   # nJ
                 elif action_name =='write':
@@ -151,7 +157,7 @@ class CactiWrapper:
                     reader = csv.DictReader(csv_file)
                     row = list(reader)[-1]
                     if not action_name == 'idle':
-                        energy = float(row[cacti_entry]) * 10**3 #original energy is in has nJ as the unit
+                        energy = float(row[cacti_entry]) * 10**3  # original energy is in has nJ as the unit
                     else:
                         standby_power_in_w = float(row[cacti_entry]) * 10**-3 # mW -> W
                         idle_energy_per_bank_in_j = standby_power_in_w * float(row[' Random cycle time (ns)']) * 10**-9
@@ -161,21 +167,24 @@ class CactiWrapper:
                 self.energy_records.update({entry_key: energy})
             os.remove(csv_file_path)  # all information recorded, no need for saving the file
             os.chdir(curr_dir)
-
         if desired_action_name == 'idle':
             energy = self.energy_records[desired_entry_key]
         else:
             address_delta = interface['arguments']['address_delta']
             data_delta = interface['arguments']['data_delta']
             if address_delta == 0 and data_delta == 0:
-                interpreted_entry_key = ('idle', tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports, n_banks)
+                interpreted_entry_key = ('idle', tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports, desired_n_banks)
                 energy = self.energy_records[interpreted_entry_key]
             else:
                 # rough estimate: address decoding takes 30%, memory_cell_access_energy takes 70%
-                address_decoding_energy = self.energy_records[desired_entry_key] * 0.3 * address_delta/n_banks
-                memory_cell_access_energy = self.energy_records[desired_entry_key] * 0.7 * data_delta
-                energy = address_decoding_energy + memory_cell_access_energy
-        return  energy  # output energy is pJ
+                idle_energy = self.energy_records[('idle', tech_node, size_in_bytes, wordsize_in_bytes,
+                                                    n_rw_ports, desired_n_banks)]
+                address_decoding_energy = (self.energy_records[desired_entry_key] - idle_energy) \
+                                           * 0.3 * address_delta/desired_n_banks
+                memory_cell_access_energy = (self.energy_records[desired_entry_key] - idle_energy) \
+                                            * 0.7 * data_delta
+                energy = address_decoding_energy + memory_cell_access_energy + idle_energy
+        return energy  # output energy is pJ
 
     def SRAM_attr_supported(self, attributes):
         tech_node = attributes['technology']
@@ -207,10 +216,7 @@ class CactiWrapper:
             print('intended cache size:', cache_size, 'line size:', line_size)
             cache_size = int(line_size) * 64  # minimum scratchpad size: 64 words
             print('corrected cache size:', cache_size)
-        if not math.ceil(math.log2(n_banks)) == math.floor(math.log2(n_banks)):
-            print('WARN: CACTI Plug-in... "n_banks: %s" is not a power of 2'%(str(n_banks)))
-            n_banks = 2**(math.floor(math.log2(n_banks)))
-            print('corrected "n_banks": ', n_banks)
+
         associativity = 1  # plain scratchpad is a direct mapped cache
         rw_ports = n_rw_ports  # assumes that all the ports in the plain scratchpad are read wrtie ports instead of exclusive ports
         if int(rw_ports) == 0:
