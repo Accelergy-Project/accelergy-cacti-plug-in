@@ -92,9 +92,9 @@ class CactiWrapper:
 
     def DRAM_attr_supported(self, attributes):
 
-        supported_attributes = {'technology': ['40nm']}
-        if 'technology' in attributes and 'width' in attributes:
-            if attributes['technology'] in supported_attributes['technology']:
+        supported_attributes = {'type': ['DDR3','HBM2','GDDR5','LPDDR','LPDDR4']}
+        if 'type' in attributes and 'width' in attributes:
+            if attributes['type'] in supported_attributes['type']:
                 return True
         return False
 
@@ -110,8 +110,22 @@ class CactiWrapper:
         width = interface['attributes']['width']
         energy = 0
         if 'read' in action_name or 'write' in action_name:
-          energy = 28  * width  # 28pJ/bit based on Keckler et al. "GPUs and The Future of Parallel Computing"
-
+            tech = interface['attributes']['type']
+            # Public data
+            if tech == 'LPDDR4':
+                energy = 8 * width
+            # Malladi et al., ISCA'12
+            elif tech == 'LPDDR':
+                energy = 40 * width
+            elif tech == 'DDR3':
+                energy = 70 * width
+            # Chatterjee et al., MICRO'17
+            elif tech == 'GDDR5':
+                energy = 14 * width
+            elif tech == 'HBM2':
+                energy = 3.9 * width
+            else:
+                energy = 0
         return energy
 
     # ----------------- SRAM related ---------------------------
