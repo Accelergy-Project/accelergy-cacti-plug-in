@@ -246,25 +246,25 @@ class CactiWrapper:
         # assign weights for CACTI optimizations
         obj_func_delay = 0
         obj_func_dynamic_power = 0
-        obj_func_leakage_power = 1000
+        obj_func_leakage_power = 1000000
         obj_func_area = 0
         obj_func_cycle_time = 0
 
         # from CACTI example config...
         dev_func_delay = 20
-        dev_func_dynamic_power = 100000
+        dev_func_dynamic_power = 10
         dev_func_leakage_power = 100000
-        dev_func_area = 1000000
-        dev_func_cycle_time = 1000000
+        dev_func_area = 100
+        dev_func_cycle_time = 100
 
         ed_ed2_none = 2  # 0 - ED, 1 - ED^2, 2 - use weight and deviate
         temp = 300
         wt = 0  # 0 - default(search across everything), 1 - global, 2 - 5%
         # delay penalty, 3 - 10%, 4 - 20 %, 5 - 30%, 6 - low-swing
-        data_arr_ram_cell_tech_flavor_in = 0  # 0(itrs-hp) 1-itrs-lstp(low standby power)
-        data_arr_peri_global_tech_flavor_in = 0  # 0(itrs-hp)
-        tag_arr_ram_cell_tech_flavor_in = 0  # itrs-hp
-        tag_arr_peri_global_tech_flavor_in = 0  # itrs-hp
+        data_arr_ram_cell_tech_flavor_in = 1  # 0(itrs-hp) 1-itrs-lstp(low standby power)
+        data_arr_peri_global_tech_flavor_in = 1  # 0(itrs-hp)
+        tag_arr_ram_cell_tech_flavor_in = 1  # itrs-hp
+        tag_arr_peri_global_tech_flavor_in = 1  # itrs-hp
         interconnect_projection_type_in = 1  # 0 - aggressive, 1 - normal
         wire_inside_mat_type_in = 1  # 2 - global, 0 - local, 1 - semi-global
         wire_outside_mat_type_in = 1  # 2 - global
