@@ -110,7 +110,8 @@ class CactiWrapper:
         width = interface['attributes']['width']
         energy = 0
         if 'read' in action_name or 'write' in action_name:
-          energy = 28  * width  # 28pJ/bit based on Keckler et al. "GPUs and The Future of Parallel Computing"
+            #energy = 28  * width  # 28pJ/bit based on Keckler et al. "GPUs and The Future of Parallel Computing"
+            energy = 8 * width # 8pj/bit to model LP-DDR4
 
         return energy
 
