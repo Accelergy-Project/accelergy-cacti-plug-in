@@ -337,4 +337,6 @@ class CactiWrapper:
                 os.mkdir(accelergy_tmp_dir)
         else:
             os.mkdir(accelergy_tmp_dir)
-        os.rename(populated_cfg_file_path, os.path.join(temp_dir, 'accelergy/'+ cfg_file_name + '_' + datetime.now().strftime("%m_%d_%H_%M_%S")))
+        shutil.copy(populated_cfg_file_path,
+                    os.path.join(temp_dir, 'accelergy/'+ cfg_file_name + '_' + datetime.now().strftime("%m_%d_%H_%M_%S")))
+        os.remove(populated_cfg_file_path)
