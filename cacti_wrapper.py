@@ -333,7 +333,7 @@ class CactiWrapper:
         accelergy_tmp_dir = os.path.join(temp_dir, 'accelergy')
         if os.path.exists(accelergy_tmp_dir):
             if len(os.listdir(accelergy_tmp_dir)) > 50: # clean up the dir if there are more than 50 files
-                shutil.rmtree(accelergy_tmp_dir)
+                shutil.rmtree(accelergy_tmp_dir, ignore_errors=True)
                 os.mkdir(accelergy_tmp_dir)
         else:
             os.mkdir(accelergy_tmp_dir)
