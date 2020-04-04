@@ -299,7 +299,7 @@ class CactiWrapper:
             block_size = 4
         if int(cache_size) / int(block_size) < 64:
             print('WARN: CACTI Plug-in...  intended cache size is smaller than 64 words')
-            print('intended cache size:', cache_size, 'line size:', line_size)
+            print('intended cache size:', cache_size, 'block size:', block_size)
             cache_size = int(block_size) * 64  # minimum scratchpad size: 64 words
             print('corrected cache size:', cache_size)
         output_width = int(wordsize_in_bytes) * 8
