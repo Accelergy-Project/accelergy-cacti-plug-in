@@ -85,7 +85,7 @@ class CactiWrapper:
         class_name = interface['class_name']
         attributes = interface['attributes']
 
-        if class_name == 'SRAM':  # CACTI supports SRAM area estimation
+        if class_name == 'SRAM' or class_name == 'cache':  # CACTI supports SRAM area estimation
             attributes_supported_function = class_name + '_attr_supported'
             if getattr(self, attributes_supported_function)(attributes):
                 return CACTI_ACCURACY
