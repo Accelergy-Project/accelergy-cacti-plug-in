@@ -309,8 +309,6 @@ class CactiWrapper:
         cfg_file_name = os.path.split(cfg_file_path)[1]
         default_cfg_file_path = os.path.join(os.path.dirname(cfg_file_path), 'default_SRAM.cfg')
         populated_cfg_file_path = cacti_exec_dir + '/' + cfg_file_name
-        print("cacti_exec_dir: " + cacti_exec_dir)
-        print("populated_cfg_file_path: " + populated_cfg_file_path)
         shutil.copyfile(default_cfg_file_path, cacti_exec_dir + '/' + cfg_file_name)
         f = open(populated_cfg_file_path, 'a+')
         f.write('\n############## User-Specified Hardware Attributes ##############\n')
