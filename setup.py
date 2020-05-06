@@ -25,7 +25,8 @@ setup(
                   ('share/accelergy/estimation_plug_ins/accelergy-cacti-plug-in',
                     ['cacti.estimator.yaml',
                      'cacti_wrapper.py',
-                     'default_SRAM.cfg'])
+                     'default_SRAM.cfg',
+                     'default_cache.cfg'])
                   ],
       include_package_data = True,
       entry_points = {},
