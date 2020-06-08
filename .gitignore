@@ -1,5 +1,6 @@
-# cacti7 source code
+# cacti7 source directory
 cacti7/
+cacti/
 
 **/__pycache__/**
 
@@ -39,3 +40,7 @@ venv/
 *.exe
 *.out
 *.app
+
+# Temporary files
+*.swp
+.DS_Store
