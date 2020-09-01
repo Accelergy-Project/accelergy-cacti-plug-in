@@ -259,8 +259,13 @@ class CactiWrapper:
         if desired_action_name == 'idle':
             energy = self.records[desired_entry_key]
         else:
-            address_delta = interface['arguments']['address_delta']
-            data_delta = interface['arguments']['data_delta']
+            if interface["arguments"] is not None:
+                address_delta = interface['arguments']['address_delta']
+                data_delta = interface['arguments']['data_delta']
+            else:
+                # allow SRAM classes without arguments, default to random accesses
+                address_delta = 1
+                data_delta = 1
             if address_delta == 0 and data_delta == 0:
                 interpreted_entry_key = ('idle', tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports, desired_n_banks)
                 energy = self.records[interpreted_entry_key]
