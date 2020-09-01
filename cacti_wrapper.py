@@ -249,6 +249,9 @@ class CactiWrapper:
         if 'nm' in tech_node:
             tech_node = tech_node[:-2]  # remove the unit
         size_in_bytes = attributes['width'] * attributes['depth'] // 8
+        if size_in_bytes == 0:
+            # zero size SRAM will simply have zero energy and area
+            return 0
         wordsize_in_bytes = attributes['width'] // 8
         n_rw_ports = attributes['n_rdwr_ports'] + attributes['n_rd_ports'] + attributes['n_wr_ports']
         desired_n_banks = attributes['n_banks']
@@ -282,10 +285,14 @@ class CactiWrapper:
         if 'nm' in tech_node:
             tech_node = tech_node[:-2]  # remove the unit
         size_in_bytes = attributes['width'] * attributes['depth'] // 8
-        if size_in_bytes < 64:
-            return False  # Cacti only estimates energy for SRAM size larger than 64B (512b)
-        if int(tech_node) < 22 or int(tech_node) > 180:
-            return False  # Cacti only supports technology that is between 22nm to 180 nm
+        if size_in_bytes == 0:
+            # zero size SRAM will simply have zero energy and area
+            return True
+        else:
+            if size_in_bytes < 64:
+                return False  # Cacti only estimates energy for SRAM size larger than 64B (512b)
+            if int(tech_node) < 22 or int(tech_node) > 180:
+                return False  # Cacti only supports technology that is between 22nm to 180 nm
         return True
 
     def SRAM_action_supported(self, action_name, arguments):
@@ -409,6 +416,9 @@ class CactiWrapper:
         if 'nm' in tech_node:
             tech_node = tech_node[:-2]  # remove the unit
         size_in_bytes = attributes['size']
+        if size_in_bytes == 0:
+            # zero size SRAM will simply have zero energy and area
+            return 0
         blocksize_in_bytes = attributes['block_size']
         n_rw_ports = attributes['n_rdwr_ports'] + attributes['n_rd_ports'] + attributes['n_wr_ports']
         desired_n_banks = attributes['n_banks']
