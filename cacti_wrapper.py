@@ -85,7 +85,7 @@ class CactiWrapper:
         class_name = interface['class_name']
         attributes = interface['attributes']
 
-        if class_name == 'SRAM' or class_name == 'cache':  # CACTI supports SRAM area estimation
+        if class_name == 'SRAM' or class_name == 'cache' or class_name == "DRAM":  # CACTI supports SRAM area estimation
             attributes_supported_function = class_name + '_attr_supported'
             if getattr(self, attributes_supported_function)(attributes):
                 return CACTI_ACCURACY
@@ -172,6 +172,13 @@ class CactiWrapper:
                 energy = 0
         return energy
 
+    def DRAM_area_supported(self, interface):
+        return True
+
+    def DRAM_estimate_area(self, interface):
+        # DRAM area is zero
+        return 0
+
     # ----------------- SRAM related ---------------------------
     def SRAM_populate_data(self, interface):
         attributes = interface['attributes']
@@ -193,7 +200,8 @@ class CactiWrapper:
         if not math.ceil(math.log2(desired_n_banks)) == math.floor(math.log2(desired_n_banks)):
             print('WARN: Cacti-plug-in... n_banks attribute is not a power of 2:', desired_n_banks)
             print('corrected "n_banks": ', n_banks)
-        cfg_file_name = self.output_prefix + 'SRAM.cfg' if self.output_prefix is not '' else 'SRAM.cfg'
+        cfg_file_name = self.output_prefix + datetime.now().strftime("%m_%d_%H_%M_%S") + '_SRAM.cfg' if self.output_prefix is not '' \
+                        else  datetime.now().strftime("%m_%d_%H_%M_%S") + '_SRAM.cfg'
         cfg_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), cfg_file_name)
         self.cacti_wrapper_for_SRAM(cacti_exec_dir, tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports,
                                     n_banks, cfg_file_path)
@@ -324,7 +332,8 @@ class CactiWrapper:
         cfg_file_name = os.path.split(cfg_file_path)[1]
         default_cfg_file_path = os.path.join(os.path.dirname(cfg_file_path), 'default_SRAM.cfg')
         populated_cfg_file_path = cacti_exec_dir + '/' + cfg_file_name
-        shutil.copyfile(default_cfg_file_path, cacti_exec_dir + '/' + cfg_file_name)
+        shutil.copyfile(default_cfg_file_path, populated_cfg_file_path)
+        print("copy ", default_cfg_file_path, " to ", populated_cfg_file_path)
         f = open(populated_cfg_file_path, 'a+')
         f.write('\n############## User-Specified Hardware Attributes ##############\n')
         f.write('-size (bytes) ' + str(cache_size) + '\n')
@@ -352,8 +361,9 @@ class CactiWrapper:
                 os.mkdir(accelergy_tmp_dir)
         else:
             os.mkdir(accelergy_tmp_dir)
-        shutil.copy(populated_cfg_file_path,
-                    os.path.join(temp_dir, 'accelergy/'+ cfg_file_name + '_' + datetime.now().strftime("%m_%d_%H_%M_%S")))
+        # shutil.copy(populated_cfg_file_path,
+        #             os.path.join(temp_dir, 'accelergy/'+ cfg_file_name + '_' + datetime.now().strftime("%m_%d_%H_%M_%S")))
+        print("CACTI plug-in removing temp file: ", populated_cfg_file_path)
         os.remove(populated_cfg_file_path)
 
     # ----------------- cache related ---------------------------
