@@ -122,8 +122,8 @@ class CactiWrapper:
                         cacti_exec_dir = os.path.dirname(cacti_exec_path)
                         return cacti_exec_dir
 
-        p = pathlib.Path(shutil.which('cacti'))
-        return str(p.parent)
+        return str(pathlib.Path(shutil.which('cacti')).parent)
+
         # search the PATH variable: search the directories provided in the PATH variable. top-down walk
         # below loop is horribly inefficient and if `shutil.which` doesn't work,
         # https://stackoverflow.com/a/377028 should be used instead
