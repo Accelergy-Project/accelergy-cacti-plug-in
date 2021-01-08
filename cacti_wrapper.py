@@ -3,7 +3,7 @@ CACTI_ACCURACY = 70  # in your metric, please set the accuracy you think CACTI's
 #-------------------------------------------------------------------------------
 # CACTI7 wrapper for generating energy estimations for plain SRAM scraptchpad
 #-------------------------------------------------------------------------------
-import subprocess, os, csv, glob, tempfile, math, shutil
+import subprocess, os, csv, glob, tempfile, math, shutil, pathlib
 from datetime import datetime
 
 class CactiWrapper:
@@ -123,7 +123,7 @@ class CactiWrapper:
                         return cacti_exec_dir
 
         p = pathlib.Path(shutil.which('cacti'))
-            return str(p.parent)
+        return str(p.parent)
         # search the PATH variable: search the directories provided in the PATH variable. top-down walk
         # below loop is horribly inefficient and if `shutil.which` doesn't work,
         # https://stackoverflow.com/a/377028 should be used instead
