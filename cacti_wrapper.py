@@ -321,10 +321,10 @@ class CactiWrapper:
         if int(wordsize_in_bytes) < 4:  # minimum line size in cacti is 32-bit/4-byte
             block_size = 4
         if int(cache_size) / int(block_size) < 64:
-            print('WARN: CACTI Plug-in...  intended cache size is smaller than 64 words')
-            print('intended cache size:', cache_size, 'block size:', block_size)
+            print('WARN: CACTI Plug-in...  intended SRAM size is smaller than 64 words')
+            print('intended SRAM size:', cache_size, 'block size:', block_size)
             cache_size = int(block_size) * 64  # minimum scratchpad size: 64 words
-            print('corrected cache size:', cache_size)
+            print('corrected SRAM size:', cache_size)
         output_width = int(wordsize_in_bytes) * 8
         rw_ports = n_rw_ports  # assumes that all the ports in the plain scratchpad are read write ports instead of exclusive ports
         if int(rw_ports) == 0:
