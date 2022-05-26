@@ -183,7 +183,7 @@ class CactiWrapper:
     def SRAM_populate_data(self, interface):
         attributes = interface['attributes']
         tech_node = attributes['technology']
-        if 'nm' in tech_node:
+        if isinstance(tech_node, str) and 'nm' in tech_node:
             tech_node = tech_node[:-2]  # remove the unit
         size_in_bytes = attributes['width'] * attributes['depth'] // 8
         wordsize_in_bytes = attributes['width'] // 8
@@ -238,7 +238,7 @@ class CactiWrapper:
     def SRAM_estimate_area(self, interface):
         attributes = interface['attributes']
         tech_node = attributes['technology']
-        if 'nm' in tech_node:
+        if isinstance(tech_node, str) and 'nm' in tech_node:
             tech_node = tech_node[:-2]  # remove the unit
         size_in_bytes = attributes['width'] * attributes['depth'] // 8
         if size_in_bytes == 0:
@@ -257,7 +257,7 @@ class CactiWrapper:
         # translate the attribute names into the ones that can be understood by Cacti
         attributes = interface['attributes']
         tech_node = attributes['technology']
-        if 'nm' in tech_node:
+        if isinstance(tech_node, str) and 'nm' in tech_node:
             tech_node = tech_node[:-2]  # remove the unit
         size_in_bytes = attributes['width'] * attributes['depth'] // 8
         if size_in_bytes == 0:
@@ -293,7 +293,7 @@ class CactiWrapper:
 
     def SRAM_attr_supported(self, attributes):
         tech_node = attributes['technology']
-        if 'nm' in tech_node:
+        if isinstance(tech_node, str) and 'nm' in tech_node:
             tech_node = tech_node[:-2]  # remove the unit
         size_in_bytes = attributes['width'] * attributes['depth'] // 8
         if size_in_bytes == 0:
@@ -370,7 +370,7 @@ class CactiWrapper:
     def cache_populate_data(self, interface):
         attributes = interface['attributes']
         tech_node = attributes['technology']
-        if 'nm' in tech_node:
+        if isinstance(tech_node, str) and 'nm' in tech_node:
             tech_node = tech_node[:-2]  # remove the unit
         size_in_bytes = attributes['size']
         blocksize_in_bytes = attributes['block_size']
@@ -426,7 +426,7 @@ class CactiWrapper:
     def cache_estimate_area(self, interface):
         attributes = interface['attributes']
         tech_node = attributes['technology']
-        if 'nm' in tech_node:
+        if isinstance(tech_node, str) and 'nm' in tech_node:
             tech_node = tech_node[:-2]  # remove the unit
         size_in_bytes = attributes['size']
         blocksize_in_bytes = attributes['block_size']
@@ -444,7 +444,7 @@ class CactiWrapper:
         # translate the attribute names into the ones that can be understood by Cacti
         attributes = interface['attributes']
         tech_node = attributes['technology']
-        if 'nm' in tech_node:
+        if isinstance(tech_node, str) and 'nm' in tech_node:
             tech_node = tech_node[:-2]  # remove the unit
         size_in_bytes = attributes['size']
         blocksize_in_bytes = attributes['block_size']
@@ -477,7 +477,7 @@ class CactiWrapper:
 
     def cache_attr_supported(self, attributes):
         tech_node = attributes['technology']
-        if 'nm' in tech_node:
+        if isinstance(tech_node, str) and 'nm' in tech_node:
             tech_node = tech_node[:-2]  # remove the unit
         size_in_bytes = attributes['size']
         if size_in_bytes < 64:
