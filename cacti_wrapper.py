@@ -171,8 +171,7 @@ class CactiWrapper(AccelergyPlugIn):
         if not math.ceil(math.log2(desired_n_banks)) == math.floor(math.log2(desired_n_banks)):
             self.logger.warn(f'Cacti-plug-in... n_banks attribute is not a power of 2: {desired_n_banks}')
             self.logger.warn(f'corrected "n_banks": {n_banks}')
-        cfg_file_name = self.output_prefix + datetime.now().strftime("%m_%d_%H_%M_%S") + '_SRAM.cfg' if self.output_prefix is not '' \
-                        else  datetime.now().strftime("%m_%d_%H_%M_%S") + '_SRAM.cfg'
+        cfg_file_name = self.output_prefix + datetime.now().strftime("%m_%d_%H_%M_%S") + '_SRAM.cfg'
         cfg_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), cfg_file_name)
         self.cacti_wrapper_for_SRAM(cacti_exec_dir, tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports,
                                     n_banks, cfg_file_path)
@@ -360,7 +359,7 @@ class CactiWrapper(AccelergyPlugIn):
         if not math.ceil(math.log2(desired_n_banks)) == math.floor(math.log2(desired_n_banks)):
             self.logger.warn(f'n_banks attribute is not a power of 2: {desired_n_banks}')
             self.logger.warn(f'corrected "n_banks": {n_banks}')
-        cfg_file_name = self.output_prefix + 'cache.cfg' if self.output_prefix is not '' else 'cache.cfg'
+        cfg_file_name = self.output_prefix + 'cache.cfg'
         cfg_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), cfg_file_name)
         self.cacti_wrapper_for_cache(cacti_exec_dir, tech_node, size_in_bytes, blocksize_in_bytes, n_rw_ports,
                                     n_banks, associativity, tag_size, cfg_file_path)
