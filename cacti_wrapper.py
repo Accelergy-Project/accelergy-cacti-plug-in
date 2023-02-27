@@ -16,14 +16,13 @@ class CactiWrapper(AccelergyPlugIn):
     # Interface functions, function name, input arguments, and output have to adhere
     # -------------------------------------------------------------------------------------
     def __init__(self, output_prefix = ''):
-        self.estimator_name =  "Cacti"
         self.output_prefix = output_prefix
         # example primitive classes supported by this estimator
         self.supported_pc = ['SRAM', 'DRAM', 'cache']
         self.records = {} # enable data reuse
 
     def get_name(self) -> str:
-        return self.estimator_name
+        return 'CACTI'
 
     def primitive_action_supported(self, query: AccelergyQuery) -> AccuracyEstimation:
         class_name = query.class_name
