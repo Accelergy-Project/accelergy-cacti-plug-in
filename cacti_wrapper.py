@@ -6,7 +6,9 @@ CACTI_ACCURACY = 70  # in your metric, please set the accuracy you think CACTI's
 import subprocess, os, csv, glob, tempfile, math, shutil
 from datetime import datetime
 
-class CactiWrapper:
+from accelergy.plug_in_interface.interface import *
+
+class CactiWrapper(AccelergyPlugIn):
     """
     an estimation plug-in
     """
@@ -14,31 +16,21 @@ class CactiWrapper:
     # Interface functions, function name, input arguments, and output have to adhere
     # -------------------------------------------------------------------------------------
     def __init__(self, output_prefix = ''):
-        self.estimator_name =  "Cacti"
         self.output_prefix = output_prefix
         # example primitive classes supported by this estimator
         self.supported_pc = ['SRAM', 'DRAM', 'cache']
         self.records = {} # enable data reuse
 
-    def primitive_action_supported(self, interface):
-        """
-        :param interface:
-        - contains four keys:
-        1. class_name : string
-        2. attributes: dictionary of name: value
-        3. action_name: string
-        4. arguments: dictionary of name: value
+    def get_name(self) -> str:
+        return 'CACTI'
 
-        :type interface: dict
-
-        :return return the accuracy if supported, return 0 if not
-        :rtype: int
-
-        """
-        class_name = interface['class_name']
-        attributes = interface['attributes']
-        action_name = interface['action_name']
-        arguments = interface['arguments']
+    def primitive_action_supported(self, query: AccelergyQuery) -> AccuracyEstimation:
+        class_name = query.class_name
+        attributes = query.class_attrs
+        action_name = query.action_name
+        arguments = query.action_args
+        # Legacy interface dictionary has keys class_name, attributes, action_name, and arguments
+        interface = query.to_legacy_interface_dict()
 
         if class_name in self.supported_pc:
             attributes_supported_function = class_name + '_attr_supported'
@@ -46,69 +38,48 @@ class CactiWrapper:
                 action_supported_function = class_name + '_action_supported'
                 accuracy = getattr(self, action_supported_function)(action_name, arguments)
                 if accuracy is not None:
-                    return accuracy
+                    return AccuracyEstimation(accuracy)
+        return AccuracyEstimation(0)  # if not supported, accuracy is 0
 
-        return 0  # if not supported, accuracy is 0
+    def estimate_energy(self, query: AccelergyQuery) -> Estimation:
+        class_name = query.class_name
+        attributes = query.class_attrs
+        action_name = query.action_name
+        arguments = query.action_args
+        # Legacy interface dictionary has keys class_name, attributes, action_name, and arguments
+        interface = query.to_legacy_interface_dict()
 
-    def estimate_energy(self, interface):
-        """
-        :param interface:
-        - contains four keys:
-        1. class_name : string
-        2. attributes: dictionary of name: value
-        3. action_name: string
-        4. arguments: dictionary of name: value
-
-       :return the estimated energy
-       :rtype float
-
-        """
         class_name = interface['class_name']
         query_function_name = class_name + '_estimate_energy'
         energy = getattr(self, query_function_name)(interface)
-        return energy
+        return Estimation(energy, 'p') # energy is in pJ
 
-    def primitive_area_supported(self, interface):
-
-        """
-        :param interface:
-        - contains two keys:
-        1. class_name : string
-        2. attributes: dictionary of name: value
-
-        :type interface: dict
-
-        :return return the accuracy if supported, return 0 if not
-        :rtype: int
-
-        """
-        class_name = interface['class_name']
-        attributes = interface['attributes']
+    def primitive_area_supported(self, query: AccelergyQuery) -> AccuracyEstimation:
+        class_name = query.class_name
+        attributes = query.class_attrs
+        action_name = query.action_name
+        arguments = query.action_args
+        # Legacy interface dictionary has keys class_name, attributes, action_name, and arguments
+        interface = query.to_legacy_interface_dict()
 
         if class_name == 'SRAM' or class_name == 'cache' or class_name == "DRAM":  # CACTI supports SRAM area estimation
             attributes_supported_function = class_name + '_attr_supported'
             if getattr(self, attributes_supported_function)(attributes):
-                return CACTI_ACCURACY
-        return 0  # if not supported, accuracy is 0
+                return AccuracyEstimation(CACTI_ACCURACY)
+        return AccuracyEstimation(0)  # if not supported, accuracy is 0
 
 
-    def estimate_area(self, interface):
-        """
-        :param interface:
-        - contains two keys:
-        1. class_name : string
-        2. attributes: dictionary of name: value
+    def estimate_area(self, query: AccelergyQuery) -> Estimation:
+        class_name = query.class_name
+        attributes = query.class_attrs
+        action_name = query.action_name
+        arguments = query.action_args
+        # Legacy interface dictionary has keys class_name, attributes, action_name, and arguments
+        interface = query.to_legacy_interface_dict()
 
-        :type interface: dict
-
-        :return the estimated area
-        :rtype: float
-
-        """
-        class_name = interface['class_name']
         query_function_name = class_name + '_estimate_area'
         area = getattr(self, query_function_name)(interface)
-        return area
+        return Estimation(area, 'u^2') # area is in um^2
 
 
     def search_for_cacti_exec(self):
@@ -192,16 +163,15 @@ class CactiWrapper:
         n_banks = desired_n_banks
         if not math.ceil(math.log2(n_banks)) == math.floor(math.log2(n_banks)):
             n_banks = 2**(math.ceil(math.log2(n_banks)))
-        print('Info: CACTI plug-in... Querying CACTI for request:\n', interface)
+        self.logger.info(f'Querying CACTI for request: {interface}')
         curr_dir = os.path.abspath(os.getcwd())
         cacti_exec_dir = self.search_for_cacti_exec()
         os.chdir(cacti_exec_dir)
         # check if the generated data already covers the case
         if not math.ceil(math.log2(desired_n_banks)) == math.floor(math.log2(desired_n_banks)):
-            print('WARN: Cacti-plug-in... n_banks attribute is not a power of 2:', desired_n_banks)
-            print('corrected "n_banks": ', n_banks)
-        cfg_file_name = self.output_prefix + datetime.now().strftime("%m_%d_%H_%M_%S") + '_SRAM.cfg' if self.output_prefix is not '' \
-                        else  datetime.now().strftime("%m_%d_%H_%M_%S") + '_SRAM.cfg'
+            self.logger.warn(f'Cacti-plug-in... n_banks attribute is not a power of 2: {desired_n_banks}')
+            self.logger.warn(f'corrected "n_banks": {n_banks}')
+        cfg_file_name = self.output_prefix + datetime.now().strftime("%m_%d_%H_%M_%S") + '_SRAM.cfg'
         cfg_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), cfg_file_name)
         self.cacti_wrapper_for_SRAM(cacti_exec_dir, tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports,
                                     n_banks, cfg_file_path)
@@ -321,10 +291,10 @@ class CactiWrapper:
         if int(wordsize_in_bytes) < 4:  # minimum line size in cacti is 32-bit/4-byte
             block_size = 4
         if int(cache_size) / int(block_size) < 64:
-            print('WARN: CACTI Plug-in...  intended SRAM size is smaller than 64 words')
-            print('intended SRAM size:', cache_size, 'block size:', block_size)
+            self.logger.warn('intended SRAM size is smaller than 64 words')
+            self.logger.warn(f'intended SRAM size: {cache_size} block size: {block_size}')
             cache_size = int(block_size) * 64  # minimum scratchpad size: 64 words
-            print('corrected SRAM size:', cache_size)
+            self.logger.warn(f'corrected SRAM size: {cache_size}')
         output_width = int(wordsize_in_bytes) * 8
         rw_ports = n_rw_ports  # assumes that all the ports in the plain scratchpad are read write ports instead of exclusive ports
         if int(rw_ports) == 0:
@@ -333,7 +303,7 @@ class CactiWrapper:
         default_cfg_file_path = os.path.join(os.path.dirname(cfg_file_path), 'default_SRAM.cfg')
         populated_cfg_file_path = cacti_exec_dir + '/' + cfg_file_name
         shutil.copyfile(default_cfg_file_path, populated_cfg_file_path)
-        print("copy ", default_cfg_file_path, " to ", populated_cfg_file_path)
+        self.logger.debug(f'copy {default_cfg_file_path} to {populated_cfg_file_path}')
         f = open(populated_cfg_file_path, 'a+')
         f.write('\n############## User-Specified Hardware Attributes ##############\n')
         f.write('-size (bytes) ' + str(cache_size) + '\n')
@@ -363,7 +333,7 @@ class CactiWrapper:
             os.mkdir(accelergy_tmp_dir)
         # shutil.copy(populated_cfg_file_path,
         #             os.path.join(temp_dir, 'accelergy/'+ cfg_file_name + '_' + datetime.now().strftime("%m_%d_%H_%M_%S")))
-        print("CACTI plug-in removing temp file: ", populated_cfg_file_path)
+        self.logger.debug(f"removing temp file: {populated_cfg_file_path}")
         os.remove(populated_cfg_file_path)
 
     # ----------------- cache related ---------------------------
@@ -381,15 +351,15 @@ class CactiWrapper:
             n_banks = 2**(math.ceil(math.log2(n_banks)))
         associativity = attributes['associativity']
         tag_size = attributes['tag_size']
-        print('Info: CACTI plug-in... Querying CACTI for request:\n', interface)
+        self.logger.debug(f'Querying CACTI for request: {interface}')
         curr_dir = os.path.abspath(os.getcwd())
         cacti_exec_dir = self.search_for_cacti_exec()
         os.chdir(cacti_exec_dir)
         # check if the generated data already covers the case
         if not math.ceil(math.log2(desired_n_banks)) == math.floor(math.log2(desired_n_banks)):
-            print('WARN: Cacti-plug-in... n_banks attribute is not a power of 2:', desired_n_banks)
-            print('corrected "n_banks": ', n_banks)
-        cfg_file_name = self.output_prefix + 'cache.cfg' if self.output_prefix is not '' else 'cache.cfg'
+            self.logger.warn(f'n_banks attribute is not a power of 2: {desired_n_banks}')
+            self.logger.warn(f'corrected "n_banks": {n_banks}')
+        cfg_file_name = self.output_prefix + 'cache.cfg'
         cfg_file_path = os.path.join(os.path.dirname(os.path.abspath(__file__)), cfg_file_name)
         self.cacti_wrapper_for_cache(cacti_exec_dir, tech_node, size_in_bytes, blocksize_in_bytes, n_rw_ports,
                                     n_banks, associativity, tag_size, cfg_file_path)
@@ -501,10 +471,10 @@ class CactiWrapper:
         if int(blocksize_in_bytes) < 4:  # minimum line size in cacti is 32-bit/4-byte
             block_size = 4
         if int(cache_size) / int(block_size) < 64:
-            print('WARN: CACTI Plug-in...  intended cache size is smaller than 64 words')
-            print('intended cache size:', cache_size, 'block size:', block_size)
+            self.logger.warn(f'intended cache size is smaller than 64 words')
+            self.logger.warn(f'intended cache size: {cache_size}, block size: {block_size}')
             cache_size = int(block_size) * 64  # minimum scratchpad size: 64 words
-            print('corrected cache size:', cache_size)
+            self.logger.warn(f'corrected cache size: {cache_size}')
         output_width = int(blocksize_in_bytes) * 8 # TODO fix this later
         rw_ports = n_rw_ports  # assumes that all the ports in the plain scratchpad are read write ports instead of exclusive ports
         if int(rw_ports) == 0:
@@ -512,8 +482,8 @@ class CactiWrapper:
         cfg_file_name = os.path.split(cfg_file_path)[1]
         default_cfg_file_path = os.path.join(os.path.dirname(cfg_file_path), 'default_SRAM.cfg')
         populated_cfg_file_path = cacti_exec_dir + '/' + cfg_file_name
-        print("cacti_exec_dir: " + cacti_exec_dir)
-        print("populated_cfg_file_path: " + populated_cfg_file_path)
+        self.logger.debug("cacti_exec_dir: " + cacti_exec_dir)
+        self.logger.debug("populated_cfg_file_path: " + populated_cfg_file_path)
         shutil.copyfile(default_cfg_file_path, cacti_exec_dir + '/' + cfg_file_name)
         f = open(populated_cfg_file_path, 'a+')
         f.write('\n############## User-Specified Hardware Attributes ##############\n')
@@ -547,3 +517,10 @@ class CactiWrapper:
         shutil.copy(populated_cfg_file_path,
                     os.path.join(temp_dir, 'accelergy/'+ cfg_file_name + '_' + datetime.now().strftime("%m_%d_%H_%M_%S")))
         os.remove(populated_cfg_file_path)
+
+if __name__ == '__main__':
+    from typing import OrderedDict
+    x = {'class_name': 'SRAM', 'attributes': OrderedDict([('technology', '32nm'), ('width', 64), ('depth', 4), ('n_rdwr_ports', 1), ('area_share', 1), ('n_rd_ports', 0), ('n_wr_ports', 0), ('n_banks', 1), ('latency', '5ns')]), 'action_name': 'write', 'arguments': None}
+    w = CactiWrapper()
+    print(w.primitive_action_supported(x))
+    print(w.estimate_energy(x))
