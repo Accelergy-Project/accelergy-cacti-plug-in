@@ -5,8 +5,12 @@ CACTI_ACCURACY = 70  # in your metric, please set the accuracy you think CACTI's
 #-------------------------------------------------------------------------------
 import subprocess, os, csv, glob, tempfile, math, shutil
 from datetime import datetime
+import pickle as pkl
 
 from accelergy.plug_in_interface.interface import *
+
+SAVE_LAST_N_RECORDS: int = 50
+CACTI_RECORDS_FILE = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'cacti_records.pkl')
 
 class CactiWrapper(AccelergyPlugIn):
     """
@@ -20,6 +24,9 @@ class CactiWrapper(AccelergyPlugIn):
         # example primitive classes supported by this estimator
         self.supported_pc = ['SRAM', 'DRAM', 'cache']
         self.records = {} # enable data reuse
+        if os.path.exists(CACTI_RECORDS_FILE):
+            with open(CACTI_RECORDS_FILE, 'rb') as f:
+                self.records = pkl.load(f)
 
     def get_name(self) -> str:
         return 'CACTI'
@@ -67,7 +74,6 @@ class CactiWrapper(AccelergyPlugIn):
             if getattr(self, attributes_supported_function)(attributes):
                 return AccuracyEstimation(CACTI_ACCURACY)
         return AccuracyEstimation(0)  # if not supported, accuracy is 0
-
 
     def estimate_area(self, query: AccelergyQuery) -> Estimation:
         class_name = query.class_name
@@ -220,6 +226,7 @@ class CactiWrapper(AccelergyPlugIn):
         desired_entry_key = ('area', tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports, desired_n_banks)
         if desired_entry_key not in self.records:
             self.SRAM_populate_data(interface)
+            self.save_records()
         area = self.records[desired_entry_key]
         return area
 
@@ -240,6 +247,7 @@ class CactiWrapper(AccelergyPlugIn):
         desired_entry_key = (desired_action_name, tech_node, size_in_bytes, wordsize_in_bytes, n_rw_ports, desired_n_banks)
         if desired_entry_key not in self.records:
             self.SRAM_populate_data(interface)
+            self.save_records()
         if desired_action_name == 'idle':
             energy = self.records[desired_entry_key]
         else:
@@ -407,6 +415,7 @@ class CactiWrapper(AccelergyPlugIn):
         desired_entry_key = ('area', tech_node, size_in_bytes, blocksize_in_bytes, n_rw_ports, desired_n_banks, associativity, tag_size)
         if desired_entry_key not in self.records:
             self.cache_populate_data(interface)
+            self.save_records()
         area = self.records[desired_entry_key]
         return area
 
@@ -426,6 +435,7 @@ class CactiWrapper(AccelergyPlugIn):
         desired_entry_key = (desired_action_name, tech_node, size_in_bytes, blocksize_in_bytes, n_rw_ports, desired_n_banks, associativity, tag_size)
         if desired_entry_key not in self.records:
             self.cache_populate_data(interface)
+            self.save_records()
         if desired_action_name == 'idle':
             energy = self.records[desired_entry_key]
         else:
@@ -517,6 +527,13 @@ class CactiWrapper(AccelergyPlugIn):
         shutil.copy(populated_cfg_file_path,
                     os.path.join(temp_dir, 'accelergy/'+ cfg_file_name + '_' + datetime.now().strftime("%m_%d_%H_%M_%S")))
         os.remove(populated_cfg_file_path)
+        
+    def save_records(self):
+        keys = list(self.records.keys())
+        keys_to_keep = keys[-SAVE_LAST_N_RECORDS:]
+        self.records = {k: self.records[k] for k in keys_to_keep}
+        with open(CACTI_RECORDS_FILE, 'wb') as f:
+            pkl.dump(self.records, f)
 
 if __name__ == '__main__':
     from typing import OrderedDict
