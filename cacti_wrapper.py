@@ -24,7 +24,7 @@ class CactiWrapper(AccelergyPlugIn):
         # example primitive classes supported by this estimator
         self.supported_pc = ['SRAM', 'DRAM', 'cache']
         self.records = {} # enable data reuse
-        if os.path.exists(CACTI_RECORDS_FILE):
+        if os.path.exists(CACTI_RECORDS_FILE) and os.access(CACTI_RECORDS_FILE, os.R_OK):
             with open(CACTI_RECORDS_FILE, 'rb') as f:
                 self.records = pkl.load(f)
 
@@ -532,8 +532,11 @@ class CactiWrapper(AccelergyPlugIn):
         keys = list(self.records.keys())
         keys_to_keep = keys[-SAVE_LAST_N_RECORDS:]
         self.records = {k: self.records[k] for k in keys_to_keep}
-        with open(CACTI_RECORDS_FILE, 'wb') as f:
-            pkl.dump(self.records, f)
+        try:
+            with open(CACTI_RECORDS_FILE, 'wb') as f:
+                pkl.dump(self.records, f)
+        except PermissionError as e:
+            self.logger.warning(f'Failed to write cache: {e}')
 
 if __name__ == '__main__':
     from typing import OrderedDict
