@@ -34,9 +34,12 @@ class CactiWrapper(AccelergyPlugIn):
         # example primitive classes supported by this estimator
         self.supported_pc = ['SRAM', 'DRAM', 'cache']
         self.records = {}  # enable data reuse
-        if os.path.exists(CACTI_RECORDS_FILE) and os.access(CACTI_RECORDS_FILE, os.R_OK):
-            with open(CACTI_RECORDS_FILE, 'rb') as f:
-                self.records = pkl.load(f)
+        if os.path.exists(CACTI_RECORDS_FILE):
+            try:
+                with open(CACTI_RECORDS_FILE, 'rb') as f:
+                    self.records = pkl.load(f)
+            except:
+                pass
         else:
             self.records = {}
 
@@ -125,16 +128,10 @@ class CactiWrapper(AccelergyPlugIn):
                         cacti_exec_path = root + os.sep + file_name
                         cacti_exec_dir = os.path.dirname(cacti_exec_path)
                         return cacti_exec_dir
-
-        # search the PATH variable: search the directories provided in the PATH variable. top-down walk
-        PATH_lst = os.environ['PATH'].split(os.pathsep)
-        for path in PATH_lst:
-            for root, directories, file_names in os.walk(os.path.abspath(path)):
-                for file_name in file_names:
-                    if file_name == 'cacti':
-                        cacti_exec_path = root + os.sep + file_name
-                        cacti_exec_dir = os.path.dirname(cacti_exec_path)
-                        return cacti_exec_dir
+        raise FileNotFoundError(
+            f'Could not find CACTI executable in {this_dir} or its subdirectories'
+            f'Was CACTI built before installing the CACTI plug-in?'
+        )
 
     # ----------------- DRAM related ---------------------------
 
@@ -361,8 +358,7 @@ class CactiWrapper(AccelergyPlugIn):
             os.path.dirname(cfg_file_path), 'default_SRAM.cfg')
         populated_cfg_file_path = cacti_exec_dir + '/' + cfg_file_name
         shutil.copyfile(default_cfg_file_path, populated_cfg_file_path)
-        self.logger.debug(
-            f'copy {default_cfg_file_path} to {populated_cfg_file_path}')
+        self.logger.info(f'copy {default_cfg_file_path} to {populated_cfg_file_path}')
         f = open(populated_cfg_file_path, 'a+')
         f.write('\n############## User-Specified Hardware Attributes ##############\n')
         f.write('-size (bytes) ' + str(cache_size) + '\n')
@@ -379,14 +375,15 @@ class CactiWrapper(AccelergyPlugIn):
         temp_output = tempfile.mkstemp()[0]
         # call cacti executable to evaluate energy consumption
         cacti_exec_path = cacti_exec_dir + '/cacti'
-        exec_list = [cacti_exec_path, '-infile', cfg_file_name]
+        exec_list = [cacti_exec_path, '-infile', populated_cfg_file_path]
+        self.logger.info(f'Calling ' + ' '.join(exec_list))
         subprocess.call(exec_list, stdout=temp_output)
 
         temp_dir = tempfile.gettempdir()
         accelergy_tmp_dir = os.path.join(temp_dir, 'accelergy')
         if os.path.exists(accelergy_tmp_dir):
-            # clean up the dir if there are more than 50 files
-            if len(os.listdir(accelergy_tmp_dir)) > 50:
+            # clean up the dir if there are more than 20 files
+            if len(os.listdir(accelergy_tmp_dir)) > 20:
                 shutil.rmtree(accelergy_tmp_dir, ignore_errors=True)
                 os.mkdir(accelergy_tmp_dir)
         else:
@@ -394,7 +391,7 @@ class CactiWrapper(AccelergyPlugIn):
         # shutil.copy(populated_cfg_file_path,
         #             os.path.join(temp_dir, 'accelergy/'+ cfg_file_name + '_' + datetime.now().strftime("%m_%d_%H_%M_%S")))
         self.logger.debug(f"removing temp file: {populated_cfg_file_path}")
-        os.remove(populated_cfg_file_path)
+        # os.remove(populated_cfg_file_path)
 
     # ----------------- cache related ---------------------------
     def cache_populate_data(self, interface):
@@ -591,14 +588,15 @@ class CactiWrapper(AccelergyPlugIn):
         temp_output = tempfile.mkstemp()[0]
         # call cacti executable to evaluate energy consumption
         cacti_exec_path = cacti_exec_dir + '/cacti'
-        exec_list = [cacti_exec_path, '-infile', cfg_file_name]
+        exec_list = [cacti_exec_path, '-infile', populated_cfg_file_path]
+        self.logger.info(f'Calling ' + ' '.join(exec_list))
         subprocess.call(exec_list, stdout=temp_output)
 
         temp_dir = tempfile.gettempdir()
         accelergy_tmp_dir = os.path.join(temp_dir, 'accelergy')
         if os.path.exists(accelergy_tmp_dir):
-            # clean up the dir if there are more than 50 files
-            if len(os.listdir(accelergy_tmp_dir)) > 50:
+            # clean up the dir if there are more than 20 files
+            if len(os.listdir(accelergy_tmp_dir)) > 20:
                 shutil.rmtree(accelergy_tmp_dir, ignore_errors=True)
                 os.mkdir(accelergy_tmp_dir)
         else:
@@ -614,7 +612,7 @@ class CactiWrapper(AccelergyPlugIn):
         try:
             with open(CACTI_RECORDS_FILE, 'wb') as f:
                 pkl.dump(self.records, f)
-        except PermissionError as e:
+        except Exception as e:
             self.logger.warning(f'Failed to write cache: {e}')
 
 

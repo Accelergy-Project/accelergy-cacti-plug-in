@@ -1,9 +1,11 @@
 from setuptools import setup
 import os
+import glob
 
 def readme():
       with open('README.md') as f:
             return f.read()
+
 
 setup(
       name='accelergy-cacti-plug-in',
@@ -26,8 +28,13 @@ setup(
                     ['cacti.estimator.yaml',
                      'cacti_wrapper.py',
                      'default_SRAM.cfg',
-                     'default_cache.cfg'])
-                  ],
+                     'default_cache.cfg',
+                     ]),
+                  ('share/accelergy/estimation_plug_ins/accelergy-cacti-plug-in',
+                   ['cacti/cacti']),
+                  ('share/accelergy/estimation_plug_ins/accelergy-cacti-plug-in/tech_params',
+                   [f for f in glob.glob('cacti/tech_params/*') if os.path.isfile(f)]),
+      ],
       include_package_data = True,
       entry_points = {},
       zip_safe = False,
