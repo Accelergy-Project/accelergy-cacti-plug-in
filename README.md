@@ -7,9 +7,12 @@ An energy estimation plug-in for [Accelergy framework](https://github.com/nellie
 - Download and build [CACTI7](https://github.com/HewlettPackard/cacti) 
 
 ## Use the plug-in
+Run the following:
 ```bash
 git clone --recurse-submoudules https://github.com/Accelergy-Project/accelergy-cacti-plug-in.git
-pip3 install accelergy-cacti-plug-in
+cd accelergy-cacti-plug-in
+make build
+pip3 install .
 ```
 - Run Accelergy (Accelergy's log will show that it identifies the CACTI plug-in )
 
