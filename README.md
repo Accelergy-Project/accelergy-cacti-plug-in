@@ -9,7 +9,7 @@ An energy estimation plug-in for [Accelergy framework](https://github.com/nellie
 ## Use the plug-in
 Run the following:
 ```bash
-git clone --recurse-submoudules https://github.com/Accelergy-Project/accelergy-cacti-plug-in.git
+git clone --recurse-submodules https://github.com/Accelergy-Project/accelergy-cacti-plug-in.git
 cd accelergy-cacti-plug-in
 make build
 pip3 install .
