@@ -6,6 +6,7 @@ import glob
 import csv
 import os
 import subprocess
+import threading
 from accelergy.plug_in_interface.interface import *
 import pickle as pkl
 from datetime import datetime
@@ -369,29 +370,7 @@ class CactiWrapper(AccelergyPlugIn):
         f.write('-UCA bank ' + str(n_banks) + '\n')
         f.close()
 
-        # create a temporary output file to redirect terminal output of cacti
-        if os.path.isfile(cacti_exec_dir + 'tmp_output.txt'):
-            os.remove(cacti_exec_dir + 'tmp_output.txt')
-        temp_output = tempfile.mkstemp()[0]
-        # call cacti executable to evaluate energy consumption
-        cacti_exec_path = cacti_exec_dir + '/cacti'
-        exec_list = [cacti_exec_path, '-infile', populated_cfg_file_path]
-        self.logger.info(f'Calling ' + ' '.join(exec_list))
-        subprocess.call(exec_list, stdout=temp_output)
-
-        temp_dir = tempfile.gettempdir()
-        accelergy_tmp_dir = os.path.join(temp_dir, 'accelergy')
-        if os.path.exists(accelergy_tmp_dir):
-            # clean up the dir if there are more than 20 files
-            if len(os.listdir(accelergy_tmp_dir)) > 20:
-                shutil.rmtree(accelergy_tmp_dir, ignore_errors=True)
-                os.mkdir(accelergy_tmp_dir)
-        else:
-            os.mkdir(accelergy_tmp_dir)
-        # shutil.copy(populated_cfg_file_path,
-        #             os.path.join(temp_dir, 'accelergy/'+ cfg_file_name + '_' + datetime.now().strftime("%m_%d_%H_%M_%S")))
-        self.logger.debug(f"removing temp file: {populated_cfg_file_path}")
-        # os.remove(populated_cfg_file_path)
+        cacti_output = self.call_cacti(cacti_exec_dir, populated_cfg_file_path)
 
     # ----------------- cache related ---------------------------
     def cache_populate_data(self, interface):
@@ -542,6 +521,36 @@ class CactiWrapper(AccelergyPlugIn):
         else:
             return None
 
+    def call_cacti(self, cacti_exec_dir, populated_cfg_file_path):
+        # create a temporary output file to redirect terminal output of cacti
+        if os.path.isfile(cacti_exec_dir + 'tmp_output.txt'):
+            os.remove(cacti_exec_dir + 'tmp_output.txt')
+            
+        tmpdir = tempfile.gettempdir()
+        tmp_output = os.path.join(tmpdir, f'cacti_output_{os.getpid()}_{threading.get_ident()}.txt')
+
+        # call cacti executable to evaluate energy consumption
+        cacti_exec_path = cacti_exec_dir + '/cacti'
+        exec_list = [cacti_exec_path, '-infile', populated_cfg_file_path]
+        self.logger.info(f'Calling ' + ' '.join(exec_list))
+        with open(tmp_output, 'w') as f:
+            result = subprocess.call(exec_list, stdout=f, stderr=subprocess.STDOUT)
+            
+        accelergy_tmp_dir = os.path.join(tempfile.gettempdir(), 'accelergy')
+        os.makedirs(accelergy_tmp_dir, exist_ok=True)
+        if len(os.listdir(accelergy_tmp_dir)) > 20:
+            shutil.rmtree(accelergy_tmp_dir, ignore_errors=True)
+            os.mkdir(accelergy_tmp_dir)
+        new_path = os.path.join(accelergy_tmp_dir, os.path.basename(populated_cfg_file_path) + '_' + datetime.now().strftime("%m_%d_%H_%M_%S"))
+        shutil.copy(populated_cfg_file_path, new_path)
+        self.logger.info(f'Moved {populated_cfg_file_path} to {new_path}')
+        self.logger.info(f'CACTI output: {tmp_output}')
+        if result != 0:
+            raise Exception(f'CACTI failed with exit code {result}. Please check {tmp_output} for CACTI output.')
+        os.remove(populated_cfg_file_path)
+        return tmp_output
+        
+
     def cacti_wrapper_for_cache(self, cacti_exec_dir, tech_node, size_in_bytes, blocksize_in_bytes, n_rw_ports, n_banks, associativity, tag_size, cfg_file_path):
         # technology node described in um
         tech_node_um = float(int(tech_node)/1000)
@@ -581,29 +590,8 @@ class CactiWrapper(AccelergyPlugIn):
         f.write('-output/input bus width  ' + str(output_width) + '\n')
         f.write('-UCA bank count ' + str(n_banks) + '\n')
         f.close()
-
-        # create a temporary output file to redirect terminal output of cacti
-        if os.path.isfile(cacti_exec_dir + 'tmp_output.txt'):
-            os.remove(cacti_exec_dir + 'tmp_output.txt')
-        temp_output = tempfile.mkstemp()[0]
-        # call cacti executable to evaluate energy consumption
-        cacti_exec_path = cacti_exec_dir + '/cacti'
-        exec_list = [cacti_exec_path, '-infile', populated_cfg_file_path]
-        self.logger.info(f'Calling ' + ' '.join(exec_list))
-        subprocess.call(exec_list, stdout=temp_output)
-
-        temp_dir = tempfile.gettempdir()
-        accelergy_tmp_dir = os.path.join(temp_dir, 'accelergy')
-        if os.path.exists(accelergy_tmp_dir):
-            # clean up the dir if there are more than 20 files
-            if len(os.listdir(accelergy_tmp_dir)) > 20:
-                shutil.rmtree(accelergy_tmp_dir, ignore_errors=True)
-                os.mkdir(accelergy_tmp_dir)
-        else:
-            os.mkdir(accelergy_tmp_dir)
-        shutil.copy(populated_cfg_file_path,
-                    os.path.join(temp_dir, 'accelergy/' + cfg_file_name + '_' + datetime.now().strftime("%m_%d_%H_%M_%S")))
-        os.remove(populated_cfg_file_path)
+        
+        cacti_output = self.call_cacti(cacti_exec_dir, populated_cfg_file_path)
 
     def save_records(self):
         keys = list(self.records.keys())
