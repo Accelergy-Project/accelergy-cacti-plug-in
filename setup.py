@@ -16,12 +16,6 @@ def readme():
         return f.read()
 
 
-class MakeBuildCommand(build_py):
-    def run(self):
-        subprocess.check_call(["make", "build"])
-        super().run()
-
-
 setup(
     name="accelergy-cacti-plug-in",
     version="0.1",
@@ -60,7 +54,4 @@ setup(
     include_package_data=True,
     entry_points={},
     zip_safe=False,
-    cmdclass={
-        "build_py": MakeBuildCommand,
-    },
 )
