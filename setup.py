@@ -31,15 +31,14 @@ setup(
     author_email="nelliewu@mit.edu",
     license="MIT",
     install_requires=["pyYAML"],
-    python_requires=">=3.6",
+    python_requires=">=3.8",
     data_files=[
         (
             "share/accelergy/estimation_plug_ins/accelergy-cacti-plug-in",
             [
                 "cacti.estimator.yaml",
                 "cacti_wrapper.py",
-                "default_SRAM.cfg",
-                "default_cache.cfg",
+                "default_cfg.cfg",
             ],
         ),
         (
