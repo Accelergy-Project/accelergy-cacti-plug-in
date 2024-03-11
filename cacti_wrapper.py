@@ -43,7 +43,7 @@ def get_cacti_dir(logger: Logger) -> str:
 
 
 class CactiDRAM(Estimator):
-    name = "DRAM"
+    name = ["DRAM", 'dram']
     percent_accuracy_0_to_100 = 80
     type2energy = {
         "LPDDR4": 8,  # Public data
@@ -342,7 +342,7 @@ class CactiMemory(ABC):
 
 
 class CactiSRAM(CactiMemory, Estimator):
-    name = "SRAM"
+    name = ["SRAM", "sram"]
     percent_accuracy_0_to_100 = 80
 
     def __init__(
