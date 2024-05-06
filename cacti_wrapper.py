@@ -167,8 +167,8 @@ class CactiMemory(ABC):
         return energy * (0.7 * bool(data_delta) + 0.3 * bool(address_delta))
 
     def log_bandwidth(self):
-        bw = self.width * self.n_rw_ports * self.n_banks * self.n_rw_ports
-        self.logger.info(f"Cache bandwidth: {bw/8} bits/cycle")
+        bw = self.width * self.n_rw_ports * self.n_banks
+        self.logger.info(f"Cache bandwidth: {bw/8} bytes/cycle")
         self.logger.info(f"Cache bandwidth: {bw/self.random_cycle_time} Gbits/second")
 
     def _interp_size(self, technology: float):
