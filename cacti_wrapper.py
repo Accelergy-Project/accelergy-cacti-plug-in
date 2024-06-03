@@ -337,7 +337,7 @@ class CactiMemory(ABC):
             float(row[" Dynamic write energy (nJ)"]) * 1e-9,
             float(row[" Standby leakage per bank(mW)"]) * 1e-3 * self.n_banks,
             float(row[" Area (mm2)"]) * 1e-6,
-            float(row[" Random cycle time (ns)"]),
+            float(row[" Random cycle time (ns)"]) * 1e-9,
         )
 
 
