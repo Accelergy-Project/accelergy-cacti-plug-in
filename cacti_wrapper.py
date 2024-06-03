@@ -43,7 +43,7 @@ def get_cacti_dir(logger: Logger) -> str:
 
 
 class CactiDRAM(Estimator):
-    name = "DRAM"
+    name = ["DRAM", 'dram']
     percent_accuracy_0_to_100 = 80
     type2energy = {
         "LPDDR4": 8,  # Public data
@@ -167,9 +167,9 @@ class CactiMemory(ABC):
         return energy * (0.7 * bool(data_delta) + 0.3 * bool(address_delta))
 
     def log_bandwidth(self):
-        bw = self.width * self.n_rw_ports * self.n_banks * self.n_rw_ports
-        self.logger.info(f"Cache bandwidth: {bw/8} bits/cycle")
-        self.logger.info(f"Cache bandwidth: {bw/self.random_cycle_time} bits/second")
+        bw = self.width * self.n_rw_ports * self.n_banks
+        self.logger.info(f"Cache bandwidth: {bw/8} bytes/cycle")
+        self.logger.info(f"Cache bandwidth: {bw/self.random_cycle_time} Gbits/second")
 
     def _interp_size(self, technology: float):
         # n_banks must be a power of two
@@ -342,7 +342,7 @@ class CactiMemory(ABC):
 
 
 class CactiSRAM(CactiMemory, Estimator):
-    name = "SRAM"
+    name = ["SRAM", "sram"]
     percent_accuracy_0_to_100 = 80
 
     def __init__(
