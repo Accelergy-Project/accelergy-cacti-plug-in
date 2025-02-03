@@ -220,22 +220,38 @@ class CactiMemory(ABC):
 
     def _interp_technology(self):
         supported_technologies = [22, 32, 45, 65, 90]
-        # Interpolate. Below 16, interpolate linearly, assuming that 0nm = 0 for
-        # all
+        # Interpolate. Below 16, interpolate energy with square root scaling (IDRS 2022),
+        # area with linear scaling.
         # https://fuse.wikichip.org/news/7343/iedm-2022-did-we-just-witness-the-death-of-sram/
         if self.technology < min(supported_technologies):
-            results = [
-                v * self.technology / min(supported_technologies)
-                for v in self._interp_size(min(supported_technologies))
-            ]
+            scale = self.technology / min(supported_technologies)
+            (
+                read_energy,
+                write_energy,
+                update_energy,
+                leak_power,
+                area,
+                random_cycle_time,
+            ) = self._interp_size(min(supported_technologies))
+            read_energy *= scale**0.5
+            write_energy *= scale**0.5
+            update_energy *= scale**0.5
+            area *= scale
             # B. Parvais et al., "The device architecture dilemma for CMOS
             # technologies: Opportunities & challenges of finFET over planar
             # MOSFET," 2009 International Symposium on VLSI Technology, Systems,
             # and Applications, Hsinchu, Taiwan, 2009, pp. 80-81, doi:
             # 10.1109/VTSA.2009.5159300.
             # finfets have approx. 21% less leakage power
-            results[3] *= 0.79
-            return tuple(results)
+            leak_power *= scale**0.5 * 0.79
+            return (
+                read_energy,
+                write_energy,
+                update_energy,
+                leak_power,
+                area,
+                random_cycle_time,
+            )
         # Beyond 180nm, squared scaling
         if self.technology > max(supported_technologies):
             return tuple(
