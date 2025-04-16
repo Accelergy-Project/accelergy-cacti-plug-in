@@ -51,6 +51,7 @@ class CactiDRAM(Estimator):
         "DDR3": 70,  # Chatterjee et al., MICRO'17
         "GDDR5": 14,
         "HBM2": 3.9,
+        "HMC": 4.2, # https://dl.acm.org/doi/10.1145/3093336.3037702
     }
 
     def __init__(self, width: int, type: str = "LPDDR4"):
