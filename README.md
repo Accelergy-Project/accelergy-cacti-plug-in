@@ -1,3 +1,7 @@
+# Deprecation Warning
+
+Please see https://github.com/Accelergy-Project/hwcomponents-cacti for the latest version.
+
 # CACTI Plug-in for Accelergy
 
 An energy estimation plug-in for [Accelergy framework](https://github.com/nelliewu95/accelergy)
